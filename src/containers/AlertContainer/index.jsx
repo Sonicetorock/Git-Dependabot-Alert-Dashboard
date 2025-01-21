@@ -9,7 +9,6 @@ export const AlertContainer = () => {
   const [alerts, setAlerts] = useState([]);
   const [filteredAlerts, setFilteredAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
-  // for infite scrolling
   const [pageNum, setPageNum] = useState(1);
   const [lastElement, setLastElement] = useState(null);
   const [hasMore, setHasMore] = useState(true);
@@ -36,7 +35,6 @@ export const AlertContainer = () => {
     states: [...new Set(alerts.map(alert => alert.state))]
   };
 
-  
   const [tempFilters, setTempFilters] = useState({
     severities: [],
     ecosystems: [],
@@ -62,9 +60,15 @@ export const AlertContainer = () => {
     })
   );
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = async (filters = {}, page = 1) => {
     setLoading(true);
     try {
+      const params = {
+        page,
+        per_page: 10,
+        ...filters
+      };
+
       const response = await axios.get(
         `https://api.github.com/repos/${import.meta.env.VITE_GITHUB_REPO_OWNER}/${import.meta.env.VITE_GITHUB_REPO_NAME}/dependabot/alerts`,
         {
@@ -73,23 +77,18 @@ export const AlertContainer = () => {
             Authorization: `Bearer ${import.meta.env.VITE_GITHUB_TOKEN_DEV}`,
             "X-GitHub-Api-Version": "2022-11-28"
           },
-          params: {
-            page: pageNum,
-            per_page: 7
-          }
+          params
         }
       );
-      
-      if (pageNum === 1) {
-        // For first page, just set the data
+
+      if (page === 1) {
         setAlerts(response.data);
         setFilteredAlerts(response.data);
       } else {
-        // For subsequent pages, append data
         setAlerts(prev => [...prev, ...response.data]);
         setFilteredAlerts(prev => [...prev, ...response.data]);
       }
-      
+
       if (response.data.length === 0) {
         setHasMore(false);
       }
@@ -101,8 +100,8 @@ export const AlertContainer = () => {
   };
 
   useEffect(() => {
-    fetchAlerts();
-  }, [pageNum]);
+    fetchAlerts(activeFilters, pageNum);
+  }, [pageNum, activeFilters]);
 
   useEffect(() => {
     const currentElement = lastElement;
@@ -126,6 +125,8 @@ export const AlertContainer = () => {
 
   const applyFilters = () => {
     setActiveFilters({ ...tempFilters });
+    setPageNum(1);
+    setHasMore(true);
     setIsFilterModalOpen(false);
   };
 
@@ -137,19 +138,6 @@ export const AlertContainer = () => {
         : [...prev[filterType], value]
     }));
   };
-
-  useEffect(() => {
-    const filtered = alerts.filter(alert => {
-      return (
-        (activeFilters.severities.length === 0 || activeFilters.severities.includes(alert.security_advisory.severity)) &&
-        (activeFilters.ecosystems.length === 0 || activeFilters.ecosystems.includes(alert.dependency.package.ecosystem)) &&
-        (activeFilters.names.length === 0 || activeFilters.names.includes(alert.dependency.package.name)) &&
-        (activeFilters.scopes.length === 0 || activeFilters.scopes.includes(alert.dependency.scope)) &&
-        (activeFilters.states.length === 0 || activeFilters.states.includes(alert.state))
-      );
-    });
-    setFilteredAlerts(filtered);
-  }, [activeFilters, alerts]);
 
   return (
     <Flex direction="column" w="full" p={4}>
@@ -164,20 +152,21 @@ export const AlertContainer = () => {
         </Button>
       </Flex>
 
-      {loading && pageNum === 1 ? (
+      {/* {loading && pageNum === 1 ? (
         <Flex justify="center" align="center" w="100%" h="100%">
           <Spinner size="xl" color="teal.200" emptyColor="teal.600"/>
         </Flex>
-      ) : (
+      ) : ( */}
         <>
           <AlertTable 
+            loading={loading}
+            pageNum={pageNum}
             alerts={filteredAlerts} 
             setLastElement={setLastElement}
             setSelectedAlert={setSelectedAlert}
             setIsMetaDataOpen={setIsMetaDataOpen}
             setIsTimelineOpen={setIsTimelineOpen}
             setIsDismissedOpen={setIsDismissedOpen}
-            pageNum={pageNum}
           />
 
           <FilterModal
@@ -201,7 +190,7 @@ export const AlertContainer = () => {
             selectedAlert={selectedAlert}
           />
         </>
-      )}
+      {/* )} */}
       {loading && pageNum > 1 && (
         <Text textAlign="center">Loading more alerts...</Text>
       )}
