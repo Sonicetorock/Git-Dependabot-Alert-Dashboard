@@ -1,5 +1,5 @@
 import { Box, Flex, IconButton, Text } from "@chakra-ui/react";
-import { ArrowRightIcon, HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
+import {  HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
 import React, { useState } from "react";
 import BreadCrumb from "../UI/BreadCrumb";
 import { RepoCard } from "../RepoCard";
@@ -12,7 +12,7 @@ const Sidebar = ({ setActiveRepoNumber, activeRepoNumber, initialRepoArrState })
     <>
       <Flex
         flexDir="column"
-        w={{ base: isSidebarOpen ? "60%" : "0%", md: "25%" }}
+        w={{ base: isSidebarOpen ? "30%" : "0%", md: "25%" }}
         h="100vh"
         boxShadow="lg"
         p={1}
@@ -24,11 +24,11 @@ const Sidebar = ({ setActiveRepoNumber, activeRepoNumber, initialRepoArrState })
         left={0}
       >
         <IconButton
-          icon={isSidebarOpen ? <CloseIcon /> : <HamburgerIcon />}
-          display={{ base: "block", md: "none" }}
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          icon={ <HamburgerIcon />}
+          onClick={() => setIsSidebarOpen(true)}
+          display={{ base: isSidebarOpen ? "none" : "block", md: "none" }}
           position="absolute"
-          top={2}
+          top={1}
           left={2}
           zIndex={20}
         />
@@ -67,6 +67,18 @@ const Sidebar = ({ setActiveRepoNumber, activeRepoNumber, initialRepoArrState })
               />
             ))}
           </Box>
+          {isSidebarOpen && <IconButton 
+            icon={<CloseIcon />}
+            onClick={() => setIsSidebarOpen(false)}
+            display={
+              {
+                base: isSidebarOpen ? "block" : "none",
+                md: "none"
+              }
+            }
+            >
+              Close
+          </IconButton>}
         </Box>
       </Flex>
     </>
